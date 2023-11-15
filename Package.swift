@@ -17,7 +17,10 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "Futbin_api"),
+            name: "Futbin_api",
+            dependencies: ["SwiftSoup"],
+            path: "Sources"
+        ),
         .testTarget(
             name: "Futbin_apiTests",
             dependencies: ["Futbin_api"]),
