@@ -62,6 +62,7 @@ public struct Parser {
     private static let groupQueue = DispatchQueue(label: "Group")
     
     //MARK: - public methods
+    ///Download all players from the specified number of pages. There are 30 players on one page.
     public static func getAllPlayersFromPages(_ pagesCount: Int, result: @escaping (Result<[Player], Error>) -> ()) {
         var players : [Player] = []
         let dispatchSemaphore = DispatchSemaphore(value: 0)
@@ -82,7 +83,7 @@ public struct Parser {
             result(.success(players))
         }
     }
-    
+    ///Download 30 players in turn from the specified number of pages
     public static func getAsyncGroupPlayersFromPages(_ pagesCount: Int, result: @escaping (Result<[Player], Error>) -> ()) {
         for pageNumber in 1...pagesCount {
             let link = mainLink + "?page=" + String(pageNumber)
@@ -96,7 +97,7 @@ public struct Parser {
             }
         }
     }
-    
+    ///Get max number of pages
     public static func maxNumberPages(result: @escaping (Result<Int, Error>) -> ()){
         getHTML(from: mainLink) { complition in
             pageNumbersQueue.async {
