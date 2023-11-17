@@ -40,3 +40,5 @@ Get max number of pages
             }
         }
 ```
+##App Example
+![Simulator Screenshot - iPhone 14 Pro - 2023-11-17 at 15 51 19](https://github.com/Leads-apps/Futbin_api/assets/95756480/46383df2-7369-44d1-adaf-b2d80d1caf22)
