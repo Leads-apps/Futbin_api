@@ -35,6 +35,8 @@ struct ListRow: View {
                 KFImage(URL(string: player.playerImage))
                     .resizable()
                     .frame(width: 50, height: 50)
+                    .background(getColorFor(player.rareType))
+                    .cornerRadius(5)
                 
                 VStack(alignment: .leading) {
                     HStack {
@@ -60,6 +62,10 @@ struct ListRow: View {
                         
                         Text(player.leagueName)
                     }
+                    
+                    KFImage(URL(string: player.technicalImage))
+                        .resizable()
+                        .frame(width: 20, height: 20)
                 }
                 .font(.caption)
                 
@@ -70,6 +76,9 @@ struct ListRow: View {
                         Spacer()
                         
                         Text("\(player.rate)")
+                            .padding(2)
+                            .background(getColorFor(player.rareType))
+                            .cornerRadius(3)
                     }
                     
                     HStack {
@@ -198,6 +207,73 @@ struct ListRow: View {
                 }
             }
             .font(.caption)
+        }
+    }
+    
+    func getColorFor(_ rareType: RareType) -> Color {
+        switch rareType {
+            case .tripleThreatGoldRare:
+                return .blue
+            case .tripleThreatHeroGoldRare:
+                return .red
+            case .punditPickGoldRare:
+                return .yellow
+            case .trailblazersGoldRare:
+                return .green
+            case .uclLiveGoldRare:
+                return .primary
+            case .europaLiveGoldRare:
+                return .gray
+            case .conferenceGoldRare:
+                return .pink
+            case .uclWGoldRare:
+                return .purple
+            case .centurionsGoldRare:
+                return .blue
+            case .centurionsIconGoldRare:
+                return .yellow
+            case .uefaHeroesMenGoldRare:
+                return .orange
+            case .uefaHeroesWomenGoldRare:
+                return .red
+            case .nikeGoldRare:
+                return .secondary
+            case .fMomentGoldRare:
+                return .primary
+            case .dynamicDuoGoldRare:
+                return .gray
+            case .sbcFlashbackGoldRare:
+                return .white
+            case .heroesGoldRare:
+                return .pink
+            case .goldRare:
+                return .purple
+            case .goldNonRare:
+                return .blue
+            case .silverRare:
+                return .green
+            case .silverNonRare:
+                return .yellow
+            case .bronzeRare:
+                return .orange
+            case .bronzeNonRare:
+                return .red
+            case .ifGoldRare:
+                return .secondary
+            case .potmEplGoldRare:
+                return .primary
+            case .potmBundesligaGoldRare:
+                return .black
+            case .potmLigue1GoldRare:
+                return .gray
+            case .potmLaligaGoldRare:
+                return .white
+            case .objectiveRewardGoldRare:
+                return .pink
+            case .libertadoresBGoldRare:
+                return .purple
+            case .sudamericanaGoldRare:
+                return .blue
         }
     }
 }

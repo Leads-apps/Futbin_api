@@ -26,6 +26,7 @@ public struct Parser {
         case playerClub = "players_club_nation"
         case playerImage = "d-inline"
         case playerPosition = "font-weight-bold"
+        case technicalImage = "ps-plus-icon"
         
         var name : String {
             rawValue
@@ -56,7 +57,8 @@ public struct Parser {
     
     //MARK: - private properties
     
-    private static var mainLink : String { "https://www.futbin.com/players" }
+    private static var playersLink : String { "https://www.futbin.com/players" }
+    private static var mainLink : String { "https://www.futbin.com" }
     private static let playersQueue = DispatchQueue(label: "Players")
     private static let pageNumbersQueue = DispatchQueue(label: "PageNumbers")
     private static let groupQueue = DispatchQueue(label: "Group")
@@ -68,7 +70,7 @@ public struct Parser {
         let dispatchSemaphore = DispatchSemaphore(value: 0)
         playersQueue.async {
             for pageNumber in 1...pagesCount {
-                let link = mainLink + "?page=" + String(pageNumber)
+                let link = playersLink + "?page=" + String(pageNumber)
                 getPlayers(from: link) { inputResult in
                     switch inputResult {
                         case .success(let inputPlayers):
@@ -86,7 +88,7 @@ public struct Parser {
     ///Download 30 players in turn from the specified number of pages
     public static func getAsyncGroupPlayersFromPages(_ pagesCount: Int, result: @escaping (Result<[Player], Error>) -> ()) {
         for pageNumber in 1...pagesCount {
-            let link = mainLink + "?page=" + String(pageNumber)
+            let link = playersLink + "?page=" + String(pageNumber)
             getPlayers(from: link) { inputResult in
                 switch inputResult {
                     case .success(let inputPlayers):
@@ -99,7 +101,7 @@ public struct Parser {
     }
     ///Get max number of pages
     public static func maxNumberPages(result: @escaping (Result<Int, Error>) -> ()){
-        getHTML(from: mainLink) { complition in
+        getHTML(from: playersLink) { complition in
             pageNumbersQueue.async {
                 switch complition {
                     case .success(let html):
@@ -178,11 +180,13 @@ public struct Parser {
                           let leagueName = try clubElement?[2].attr(ParserAttributeKey.title.key),
                           let leagueImage = try clubElement?[2].select(ParserTag.img.tag).attr(ParserAttributeKey.src.key) else { return players }
                     
+                    let technicalImage = try element.getElementsByClass(ParserClass.technicalImage.name).first()?.attr(ParserAttributeKey.src.key)
                     
                     guard let position = try element.getElementsByClass(ParserClass.playerPosition.name).first()?.text() else { return players }
                     
                     let snapElements = try element.select(ParserTag.span.tag)
                     let rate = try snapElements[2].text()
+                    let rareType = try snapElements[2].className()
                     let playerPrice = try snapElements[3].text()
                     
                     let tdElements = try element.select(ParserTag.td.tag)
@@ -208,6 +212,8 @@ public struct Parser {
                                                 natioalityFlag: natioalityFlag,
                                                 leagueName: leagueName,
                                                 leagueImage: leagueImage,
+                                                technicalImage: mainLink + (technicalImage ?? ""),
+                                                rareType: .init(rawValue: rareType) ?? .heroesGoldRare,
                                                 rate: Int(rate) ?? .zero,
                                                 position: position,
                                                 playerPrice: playerPrice,
