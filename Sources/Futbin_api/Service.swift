@@ -1,17 +1,17 @@
 import Foundation
 import SwiftSoup
 
-public struct Parser {
+public struct Service {
     
     //MARK: - nested enum
     
-    private enum ParserError: Error {
+    private enum ServiceError: Error {
         case badURL
         case sessionError(error: Error)
         case noData
     }
     
-    private enum ParserProperty: String {
+    private enum ServiceProperty: String {
         case pageNumber = "page-item"
         case player1 = "player_tr_1"
         case player2 = "player_tr_2"
@@ -21,7 +21,7 @@ public struct Parser {
         }
     }
     
-    private enum ParserClass: String {
+    private enum ServiceClass: String {
         case playerName = "player_name_players_table get-tp"
         case playerClub = "players_club_nation"
         case playerImage = "d-inline"
@@ -33,7 +33,7 @@ public struct Parser {
         }
     }
     
-    private enum ParserAttributeKey: String {
+    private enum ServiceAttributeKey: String {
         case title = "data-original-title"
         case data = "data-original"
         case src = "src"
@@ -43,7 +43,7 @@ public struct Parser {
         }
     }
     
-    private enum ParserTag: String {
+    private enum ServiceTag: String {
         case a = "a"
         case img = "img"
         case span = "span"
@@ -107,7 +107,7 @@ public struct Parser {
                     case .success(let html):
                         do {
                             let document = try SwiftSoup.parse(html)
-                            let elements : Elements = try document.getElementsByClass(ParserProperty.pageNumber.name)
+                            let elements : Elements = try document.getElementsByClass(ServiceProperty.pageNumber.name)
                             var pages : [Int] = .init()
                             for element in elements {
                                 let text = try element.text()
@@ -150,8 +150,8 @@ public struct Parser {
     private static func getPlayersElements(from document: Document) throws -> [Elements] {
         do {
             var playersElements : [Elements] = .init()
-            let player1Elements : Elements = try document.getElementsByClass(ParserProperty.player1.name)
-            let player2Elements : Elements = try document.getElementsByClass(ParserProperty.player2.name)
+            let player1Elements : Elements = try document.getElementsByClass(ServiceProperty.player1.name)
+            let player2Elements : Elements = try document.getElementsByClass(ServiceProperty.player2.name)
             playersElements.append(contentsOf: [player1Elements, player2Elements])
             return playersElements
         } catch {
@@ -164,32 +164,32 @@ public struct Parser {
             var players : [Player] = .init()
             for playerElements in playersElements {
                 for element in playerElements {
-                    let nameElement = try element.getElementsByClass(ParserClass.playerName.name)
+                    let nameElement = try element.getElementsByClass(ServiceClass.playerName.name)
                     guard let name = try nameElement.first()?.text() else { return players }
                     
-                    let imageElement = try element.getElementsByClass(ParserClass.playerImage.name)
-                    let tagElement = try imageElement.select(ParserTag.img.tag)
-                    let image = try tagElement.attr(ParserAttributeKey.data.key)
+                    let imageElement = try element.getElementsByClass(ServiceClass.playerImage.name)
+                    let tagElement = try imageElement.select(ServiceTag.img.tag)
+                    let image = try tagElement.attr(ServiceAttributeKey.data.key)
                     
-                    let clubElements = try element.getElementsByClass(ParserClass.playerClub.name).first()
-                    let clubElement = try clubElements?.getElementsByTag(ParserTag.a.tag)
-                    guard let clubName = try clubElement?[0].attr(ParserAttributeKey.title.key),
-                          let clubImage = try clubElement?[0].select(ParserTag.img.tag).attr(ParserAttributeKey.src.key),
-                          let nationality = try clubElement?[1].attr(ParserAttributeKey.title.key),
-                          let natioalityFlag = try clubElement?[1].select(ParserTag.img.tag).attr(ParserAttributeKey.src.key),
-                          let leagueName = try clubElement?[2].attr(ParserAttributeKey.title.key),
-                          let leagueImage = try clubElement?[2].select(ParserTag.img.tag).attr(ParserAttributeKey.src.key) else { return players }
+                    let clubElements = try element.getElementsByClass(ServiceClass.playerClub.name).first()
+                    let clubElement = try clubElements?.getElementsByTag(ServiceTag.a.tag)
+                    guard let clubName = try clubElement?[0].attr(ServiceAttributeKey.title.key),
+                          let clubImage = try clubElement?[0].select(ServiceTag.img.tag).attr(ServiceAttributeKey.src.key),
+                          let nationality = try clubElement?[1].attr(ServiceAttributeKey.title.key),
+                          let natioalityFlag = try clubElement?[1].select(ServiceTag.img.tag).attr(ServiceAttributeKey.src.key),
+                          let leagueName = try clubElement?[2].attr(ServiceAttributeKey.title.key),
+                          let leagueImage = try clubElement?[2].select(ServiceTag.img.tag).attr(ServiceAttributeKey.src.key) else { return players }
                     
-                    let technicalImage = try element.getElementsByClass(ParserClass.technicalImage.name).first()?.attr(ParserAttributeKey.src.key)
+                    let technicalImage = try element.getElementsByClass(ServiceClass.technicalImage.name).first()?.attr(ServiceAttributeKey.src.key)
                     
-                    guard let position = try element.getElementsByClass(ParserClass.playerPosition.name).first()?.text() else { return players }
+                    guard let position = try element.getElementsByClass(ServiceClass.playerPosition.name).first()?.text() else { return players }
                     
-                    let snapElements = try element.select(ParserTag.span.tag)
+                    let snapElements = try element.select(ServiceTag.span.tag)
                     let rate = try snapElements[2].text()
                     let rareType = try snapElements[2].className()
                     let playerPrice = try snapElements[3].text()
                     
-                    let tdElements = try element.select(ParserTag.td.tag)
+                    let tdElements = try element.select(ServiceTag.td.tag)
                     let skills = try tdElements[6].text()
                     let weakFoot = try tdElements[7].text()
                     let attackDefense = try tdElements[8].text()
@@ -239,7 +239,7 @@ public struct Parser {
         }
     }
     
-    private static func getHTML(from link: String, complition: @escaping (_ complition: Result<String, ParserError>) -> ()) {
+    private static func getHTML(from link: String, complition: @escaping (_ complition: Result<String, ServiceError>) -> ()) {
         guard let url = URL(string: link) else {
             complition(.failure(.badURL))
             return
