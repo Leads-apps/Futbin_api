@@ -22,21 +22,38 @@ public struct Service {
     }
     
     private enum ServiceClass: String {
-        case playerName = "player_name_players_table get-tp"
-        case playerClub = "players_club_nation"
-        case playerImage = "d-inline"
-        case playerPosition = "font-weight-bold"
-        case technicalImage = "ps-plus-icon"
+        case table = "table  table-info"
+        case club = "pcdisplay-club"
+        case league = "pcdisplay-league"
+        case country = "pcdisplay-country"
+        case position = "pcdisplay-pos"
+        case rate = "pcdisplay-rat"
+        case playerImage = "pcdisplay-picture-width"
+        case price = "font-weight-bold"
+        case playerCards = "download-prices-player-name-holder"
         
         var name : String {
             rawValue
         }
     }
     
+    private enum ServiceID: String {
+        case pace = "main-pace-val-0"
+        case shooting = "main-shooting-val-0"
+        case passing = "main-passing-val-0"
+        case dribbling = "main-dribblingp-val-0"
+        case defending = "main-defending-val-0"
+        case physicality = "main-heading-val-0"
+        case table = "repTb"
+        
+        var id : String {
+            rawValue
+        }
+    }
+    
     private enum ServiceAttributeKey: String {
-        case title = "data-original-title"
-        case data = "data-original"
         case src = "src"
+        case url = "data-url"
         
         var key : String {
             rawValue
@@ -49,6 +66,7 @@ public struct Service {
         case span = "span"
         case td = "td"
         case div = "div"
+        case tbody = "tbody"
         
         var tag : String {
             rawValue
@@ -64,38 +82,48 @@ public struct Service {
     private static let groupQueue = DispatchQueue(label: "Group")
     
     //MARK: - public methods
-    ///Download all players from the specified number of pages. There are 30 players on one page.
-    public static func getAllPlayersFromPages(_ pagesCount: Int, result: @escaping (Result<[Player], Error>) -> ()) {
-        var players : [Player] = []
-        let dispatchSemaphore = DispatchSemaphore(value: 0)
-        playersQueue.async {
-            for pageNumber in 1...pagesCount {
-                let link = playersLink + "?page=" + String(pageNumber)
-                getPlayers(from: link) { inputResult in
-                    switch inputResult {
-                        case .success(let inputPlayers):
-                            players.append(contentsOf: inputPlayers)
+    ///Get detail player info (PlayerDetail) with input model Player
+    static func getPlayersDetailFor(player: Player, result: @escaping (Result<PlayerDetail, Error>) -> ()) {
+        let link = mainLink + player.linkDetail
+        getHTML(from: link) { complition in
+            switch complition {
+            case .success(let html):
+                do {
+                    let document = try SwiftSoup.parse(html)
+                    let elements = try document.getAllElements()
+                    
+                    getPlaersDetailFrom(elements) { complition in
+                        switch complition {
+                        case .success(let playerDetail):
+                            var playerDetail = playerDetail
+                            playerDetail.playerPrice = player.playerPrice
+                            playerDetail.popularity = player.popularity
+                            playerDetail.baseStats = player.baseStats
+                            playerDetail.gameStats = player.gameStats
+                            
+                            result(.success(playerDetail))
                         case .failure(let error):
                             result(.failure(error))
+                        }
                     }
-                    dispatchSemaphore.signal()
+                } catch {
+                    result(.failure(error))
                 }
-                dispatchSemaphore.wait()
+            case .failure(let error):
+                result(.failure(error))
             }
-            result(.success(players))
         }
     }
+    
     ///Download 30 players in turn from the specified number of pages
-    public static func getAsyncGroupPlayersFromPages(_ pagesCount: Int, result: @escaping (Result<[Player], Error>) -> ()) {
-        for pageNumber in 1...pagesCount {
-            let link = playersLink + "?page=" + String(pageNumber)
-            getPlayers(from: link) { inputResult in
-                switch inputResult {
-                    case .success(let inputPlayers):
-                        result(.success(inputPlayers))
-                    case .failure(let error):
-                        result(.failure(error))
-                }
+    public static func getPlayersFromPages(_ pageNumber: Int, result: @escaping (Result<[Player], Error>) -> ()) {
+        let link = playersLink + "?page=" + String(pageNumber)
+        getPlayersList(from: link) { inputResult in
+            switch inputResult {
+            case .success(let inputPlayers):
+                result(.success(inputPlayers))
+            case .failure(let error):
+                result(.failure(error))
             }
         }
     }
@@ -104,24 +132,24 @@ public struct Service {
         getHTML(from: playersLink) { complition in
             pageNumbersQueue.async {
                 switch complition {
-                    case .success(let html):
-                        do {
-                            let document = try SwiftSoup.parse(html)
-                            let elements : Elements = try document.getElementsByClass(ServiceProperty.pageNumber.name)
-                            var pages : [Int] = .init()
-                            for element in elements {
-                                let text = try element.text()
-                                if let number = Int(text) {
-                                    pages.append(number)
-                                }
+                case .success(let html):
+                    do {
+                        let document = try SwiftSoup.parse(html)
+                        let elements : Elements = try document.getElementsByClass(ServiceProperty.pageNumber.name)
+                        var pages : [Int] = .init()
+                        for element in elements {
+                            let text = try element.text()
+                            if let number = Int(text) {
+                                pages.append(number)
                             }
-                            let numbersOfPage = pages.max() ?? 1
-                            result(.success(numbersOfPage))
-                        } catch {
-                            result(.failure(error))
                         }
-                    case .failure(let error):
+                        let numbersOfPage = pages.max() ?? 1
+                        result(.success(numbersOfPage))
+                    } catch {
                         result(.failure(error))
+                    }
+                case .failure(let error):
+                    result(.failure(error))
                 }
             }
         }
@@ -129,25 +157,91 @@ public struct Service {
     
     //MARK: - private methods
     
-    private static func getPlayers(from link: String, result: @escaping (Result<[Player], Error>) -> ()) {
+    private static func getPlaersDetailFrom(_ elements: Elements, result: @escaping (Result<PlayerDetail, Error>) -> ()) {
+        do {
+            var playerDetail = PlayerDetail()
+            let table = try elements.first()?.getElementsByClass(ServiceClass.table.name)
+            let selectTdTag = try table?.select(ServiceTag.tbody.tag).select(ServiceTag.td.tag)
+            let name = selectTdTag?[safe: 0]
+            playerDetail.name = try name?.text()
+            let clubElement = selectTdTag?[safe: 2]
+            let clubName = try clubElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.clubName = clubName
+            let clubImage = try elements.first()?.getElementsByClass(ServiceClass.club.name).first()?.select(ServiceTag.img.tag).array().first?.attr(ServiceAttributeKey.src.key)
+            playerDetail.clubImage = clubImage
+            let leagueElement = selectTdTag?[safe: 4]
+            let leagueName = try leagueElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.leagueName = leagueName
+            let leagueImage = try elements.first()?.getElementsByClass(ServiceClass.league.name).first()?.select(ServiceTag.img.tag).array().first?.attr(ServiceAttributeKey.src.key)
+            playerDetail.leagueImage = leagueImage
+            let nationalityElement = selectTdTag?[safe: 3]
+            let nationality = try nationalityElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.nationality = nationality
+            let natioalityFlag = try elements.first()?.getElementsByClass(ServiceClass.country.name).first()?.select(ServiceTag.img.tag).array().first?.attr(ServiceAttributeKey.src.key)
+            playerDetail.natioalityFlag = natioalityFlag
+            let skillsElement = selectTdTag?[safe: 5]
+            let skills = try skillsElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.skills = skills
+            let weakFootElement = selectTdTag?[safe: 6]
+            let weakFoot = try weakFootElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.weakFoot = weakFoot
+            let position = try elements.first()?.getElementsByClass(ServiceClass.position.name).first()?.text()
+            playerDetail.position = position
+            let rate = try elements.first()?.getElementsByClass(ServiceClass.rate.name).first()?.text()
+            playerDetail.rate = rate
+            let playerImage = try elements.first()?.getElementsByClass(ServiceClass.playerImage.name).first()?.select(ServiceTag.img.tag).array().first?.attr(ServiceAttributeKey.src.key)
+            playerDetail.playerImage = playerImage
+            let cardImage = try elements.first()?.getElementsByClass(ServiceClass.playerCards.name).first()?.select(ServiceTag.img.tag).array().first?.attr(ServiceAttributeKey.src.key)
+            playerDetail.cardImage = mainLink + (cardImage ?? "")
+            let attackWRElement = selectTdTag?[safe: 12]
+            let attackWR = try attackWRElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.attackWR = attackWR
+            let defenseWRElement = selectTdTag?[safe: 13]
+            let defenseWR = try defenseWRElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.defenseWR = defenseWR
+            let pace = try elements.first()?.getElementById(ServiceID.pace.id)?.text()
+            playerDetail.pace = pace
+            let shooting = try elements.first()?.getElementById(ServiceID.shooting.id)?.text()
+            playerDetail.shooting = shooting
+            let passing = try elements.first()?.getElementById(ServiceID.passing.id)?.text()
+            playerDetail.passing = passing
+            let dribbling = try elements.first()?.getElementById(ServiceID.dribbling.id)?.text()
+            playerDetail.dribbling = dribbling
+            let defending = try elements.first()?.getElementById(ServiceID.defending.id)?.text()
+            playerDetail.defending = defending
+            let physicality = try elements.first()?.getElementById(ServiceID.physicality.id)?.text()
+            playerDetail.physicality = physicality
+            let heightWRElement = selectTdTag?[safe: 9]
+            let height = try heightWRElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.height = height
+            let weightWRElement = selectTdTag?[safe: 10]
+            let weight = try weightWRElement?.tagName(ServiceTag.a.tag).text()
+            playerDetail.weight = weight
+            result(.success(playerDetail))
+        } catch {
+            result(.failure(error))
+        }
+    }
+    
+    private static func getPlayersList(from link: String, result: @escaping (Result<[Player], Error>) -> ()) {
         getHTML(from: link) { complition in
             switch complition {
-                case .success(let html):
-                    do {
-                        let document = try SwiftSoup.parse(html)
-                        let playersElements = try getPlayersElements(from: document)
-                        let players = try getContentForPlayers(from: playersElements)
-                        result(.success(players))
-                    } catch {
-                        result(.failure(error))
-                    }
-                case .failure(let error):
+            case .success(let html):
+                do {
+                    let document = try SwiftSoup.parse(html)
+                    let elements = try getElements(from: document)
+                    let players = try getPlayersLinks(from: elements)
+                    result(.success(players))
+                } catch {
                     result(.failure(error))
+                }
+            case .failure(let error):
+                result(.failure(error))
             }
         }
     }
     
-    private static func getPlayersElements(from document: Document) throws -> [Elements] {
+    private static func getElements(from document: Document) throws -> [Elements] {
         do {
             var playersElements : [Elements] = .init()
             let player1Elements : Elements = try document.getElementsByClass(ServiceProperty.player1.name)
@@ -159,77 +253,21 @@ public struct Service {
         }
     }
     
-    private static func getContentForPlayers(from playersElements: [Elements]) throws -> [Player] {
+    private static func getPlayersLinks(from playersElements: [Elements]) throws -> [Player] {
         do {
             var players : [Player] = .init()
             for playerElements in playersElements {
                 for element in playerElements {
-                    let nameElement = try element.getElementsByClass(ServiceClass.playerName.name)
-                    guard let name = try nameElement.first()?.text() else { return players }
-                    
-                    let imageElement = try element.getElementsByClass(ServiceClass.playerImage.name)
-                    let tagElement = try imageElement.select(ServiceTag.img.tag)
-                    let image = try tagElement.attr(ServiceAttributeKey.data.key)
-                    
-                    let clubElements = try element.getElementsByClass(ServiceClass.playerClub.name).first()
-                    let clubElement = try clubElements?.getElementsByTag(ServiceTag.a.tag)
-                    guard let clubName = try clubElement?[0].attr(ServiceAttributeKey.title.key),
-                          let clubImage = try clubElement?[0].select(ServiceTag.img.tag).attr(ServiceAttributeKey.src.key),
-                          let nationality = try clubElement?[1].attr(ServiceAttributeKey.title.key),
-                          let natioalityFlag = try clubElement?[1].select(ServiceTag.img.tag).attr(ServiceAttributeKey.src.key),
-                          let leagueName = try clubElement?[2].attr(ServiceAttributeKey.title.key),
-                          let leagueImage = try clubElement?[2].select(ServiceTag.img.tag).attr(ServiceAttributeKey.src.key) else { return players }
-                    
-                    let technicalImage = try element.getElementsByClass(ServiceClass.technicalImage.name).first()?.attr(ServiceAttributeKey.src.key)
-                    
-                    guard let position = try element.getElementsByClass(ServiceClass.playerPosition.name).first()?.text() else { return players }
-                    
-                    let snapElements = try element.select(ServiceTag.span.tag)
-                    let rate = try snapElements[2].text()
-                    let rareType = try snapElements[2].className()
-                    let playerPrice = try snapElements[3].text()
-                    
-                    let tdElements = try element.select(ServiceTag.td.tag)
-                    let skills = try tdElements[6].text()
-                    let weakFoot = try tdElements[7].text()
-                    let attackDefense = try tdElements[8].text()
-                    let pace = try tdElements[9].text()
-                    let shooting = try tdElements[10].text()
-                    let passing = try tdElements[11].text()
-                    let dribbling = try tdElements[12].text()
-                    let defending = try tdElements[13].text()
-                    let physicality = try tdElements[14].text()
-                    let heightWeight = try tdElements[15].text()
-                    let popularity = try tdElements[16].text()
-                    let baseStats = try tdElements[17].text()
-                    let gameStats = try tdElements[18].text()
-                    
-                    let player : Player = .init(name: name,
-                                                playerImage: image,
-                                                clubName: clubName,
-                                                clubImage: clubImage,
-                                                nationality: nationality,
-                                                natioalityFlag: natioalityFlag,
-                                                leagueName: leagueName,
-                                                leagueImage: leagueImage,
-                                                technicalImage: mainLink + (technicalImage ?? ""),
-                                                rareType: .init(rawValue: rareType) ?? .heroesGoldRare,
-                                                rate: Int(rate) ?? .zero,
-                                                position: position,
+                    let link = try element.attr(ServiceAttributeKey.url.key)
+                    let playerPrice = try element.getElementsByClass(ServiceClass.price.name).select(ServiceTag.span.tag).text()
+                    let popularity = try element.getElementsByTag(ServiceTag.td.tag)[safe: 16]?.text()
+                    let baseStats = try element.getElementsByTag(ServiceTag.td.tag)[safe: 17]?.text()
+                    let gameStats = try element.getElementsByTag(ServiceTag.td.tag)[safe: 18]?.text()
+                    let player : Player = .init(linkDetail: link,
                                                 playerPrice: playerPrice,
-                                                skills: Int(skills) ?? .zero,
-                                                weakFoot: Int(weakFoot)  ?? .zero,
-                                                attackDefense: attackDefense,
-                                                pace: Int(pace) ?? .zero,
-                                                shooting: Int(shooting) ?? .zero,
-                                                passing: Int(passing) ?? .zero,
-                                                dribbling: Int(dribbling) ?? .zero,
-                                                defending: Int(defending) ?? .zero,
-                                                physicality: Int(physicality) ?? .zero,
-                                                heightWeight: heightWeight,
-                                                popularity: Int(popularity) ?? .zero,
-                                                baseStats: Int(baseStats) ?? .zero,
-                                                gameStats: Int(gameStats) ?? .zero)
+                                                popularity: popularity,
+                                                baseStats: baseStats,
+                                                gameStats: gameStats)
                     players.append(player)
                 }
             }
@@ -257,5 +295,14 @@ public struct Service {
                 complition(.failure(.noData))
             }
         }.resume()
+    }
+}
+
+extension Elements {
+    subscript(safe index: Int) -> Element? {
+        guard index >= 0 && index < count else {
+            return nil
+        }
+        return self[index]
     }
 }
