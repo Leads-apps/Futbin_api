@@ -1,5 +1,4 @@
 import SwiftUI
-import Futbin_api
 import Kingfisher
 
 struct ContentView: View {
@@ -18,7 +17,7 @@ struct ContentView: View {
             .font(.title)
             .padding()
             
-            List(viewModel.players, id: \.playerImage) { player in
+            List(viewModel.players) { player in
                 ListRow(player: player)
             }
         }
@@ -27,45 +26,48 @@ struct ContentView: View {
 
 struct ListRow: View {
     
-    let player : Player
+    let player : PlayerDetail
     
     var body: some View {
         VStack {
+            Text(player.name ?? "-")
             HStack {
-                KFImage(URL(string: player.playerImage))
-                    .resizable()
-                    .frame(width: 50, height: 50)
-                    .background(getColorFor(player.rareType))
-                    .cornerRadius(5)
+                ZStack {
+                    KFImage(URL(string: player.cardImage ?? "-"))
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 50, height: 70)
+                    
+                    KFImage(URL(string: player.playerImage ?? "-"))
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 50, height: 50)
+                }
                 
                 VStack(alignment: .leading) {
                     HStack {
-                        KFImage(URL(string: player.clubImage))
+                        KFImage(URL(string: player.clubImage ?? ""))
                             .resizable()
                             .frame(width: 20, height: 20)
                         
-                        Text(player.clubName)
+                        Text(player.clubName ?? "-")
                     }
                     
                     HStack {
-                        KFImage(URL(string: player.natioalityFlag))
+                        KFImage(URL(string: player.natioalityFlag ?? "-"))
                             .resizable()
                             .frame(width: 20, height: 20)
                         
-                        Text(player.nationality)
+                        Text(player.nationality ?? "-")
                     }
                     
                     HStack {
-                        KFImage(URL(string: player.leagueImage))
+                        KFImage(URL(string: player.leagueImage ?? "-"))
                             .resizable()
                             .frame(width: 20, height: 20)
                         
-                        Text(player.leagueName)
+                        Text(player.leagueName ?? "-")
                     }
-                    
-                    KFImage(URL(string: player.technicalImage))
-                        .resizable()
-                        .frame(width: 20, height: 20)
                 }
                 .font(.caption)
                 
@@ -75,18 +77,16 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.rate)")
+                        Text(player.rate ?? "-")
                             .padding(2)
-                            .background(getColorFor(player.rareType))
                             .cornerRadius(3)
                     }
-                    
                     HStack {
                         Text("Position")
                         
                         Spacer()
                         
-                        Text(player.position)
+                        Text(player.position ?? "-")
                         
                     }
                     
@@ -95,7 +95,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text(player.playerPrice)
+                        Text(player.playerPrice ?? "-")
                     }
                     
                     HStack {
@@ -103,7 +103,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.skills)")
+                        Text(player.skills ?? "-")
                     }
                     
                     HStack {
@@ -111,7 +111,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.weakFoot)")
+                        Text(player.weakFoot ?? "-")
                     }
                     
                     HStack {
@@ -119,7 +119,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text(player.attackDefense)
+                        Text("\(player.attackWR ?? "-") | \(player.defenseWR ?? "-")")
                     }
                     
                     HStack {
@@ -127,7 +127,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.pace)")
+                        Text(player.pace ?? "-")
                     }
                     
                     HStack {
@@ -135,7 +135,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.shooting)")
+                        Text(player.shooting ?? "-")
                     }
                     
                     HStack {
@@ -143,7 +143,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.passing)")
+                        Text(player.passing ?? "-")
                     }
                     
                     HStack {
@@ -151,7 +151,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.dribbling)")
+                        Text(player.dribbling ?? "-")
                     }
                     
                     HStack {
@@ -159,7 +159,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.defending)")
+                        Text(player.defending ?? "-")
                     }
                     
                     HStack {
@@ -167,7 +167,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text("\(player.physicality)")
+                        Text(player.physicality ?? "-")
                     }
                     
                     HStack {
@@ -175,7 +175,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text(player.heightWeight)
+                        Text("\(player.height ?? "-") | \(player.weight ?? "-")")
                     }
                 }
                 .font(.caption2)
@@ -187,7 +187,7 @@ struct ListRow: View {
                 VStack(alignment: .center) {
                     Text("Popularity")
                     
-                    Text("\(player.physicality)")
+                    Text(player.popularity ?? "-")
                 }
                 
                 Spacer()
@@ -195,7 +195,7 @@ struct ListRow: View {
                 VStack(alignment: .center) {
                     Text("Base Status")
                     
-                    Text("\(player.baseStats)")
+                    Text(player.baseStats ?? "-")
                 }
                 
                 Spacer()
@@ -203,77 +203,10 @@ struct ListRow: View {
                 VStack(alignment: .center) {
                     Text("Game Status")
                     
-                    Text("\(player.gameStats)")
+                    Text(player.gameStats ?? "-")
                 }
             }
             .font(.caption)
-        }
-    }
-    
-    func getColorFor(_ rareType: RareType) -> Color {
-        switch rareType {
-            case .tripleThreatGoldRare:
-                return .blue
-            case .tripleThreatHeroGoldRare:
-                return .red
-            case .punditPickGoldRare:
-                return .yellow
-            case .trailblazersGoldRare:
-                return .green
-            case .uclLiveGoldRare:
-                return .primary
-            case .europaLiveGoldRare:
-                return .gray
-            case .conferenceGoldRare:
-                return .pink
-            case .uclWGoldRare:
-                return .purple
-            case .centurionsGoldRare:
-                return .blue
-            case .centurionsIconGoldRare:
-                return .yellow
-            case .uefaHeroesMenGoldRare:
-                return .orange
-            case .uefaHeroesWomenGoldRare:
-                return .red
-            case .nikeGoldRare:
-                return .secondary
-            case .fMomentGoldRare:
-                return .primary
-            case .dynamicDuoGoldRare:
-                return .gray
-            case .sbcFlashbackGoldRare:
-                return .white
-            case .heroesGoldRare:
-                return .pink
-            case .goldRare:
-                return .purple
-            case .goldNonRare:
-                return .blue
-            case .silverRare:
-                return .green
-            case .silverNonRare:
-                return .yellow
-            case .bronzeRare:
-                return .orange
-            case .bronzeNonRare:
-                return .red
-            case .ifGoldRare:
-                return .secondary
-            case .potmEplGoldRare:
-                return .primary
-            case .potmBundesligaGoldRare:
-                return .black
-            case .potmLigue1GoldRare:
-                return .gray
-            case .potmLaligaGoldRare:
-                return .white
-            case .objectiveRewardGoldRare:
-                return .pink
-            case .libertadoresBGoldRare:
-                return .purple
-            case .sudamericanaGoldRare:
-                return .blue
         }
     }
 }
