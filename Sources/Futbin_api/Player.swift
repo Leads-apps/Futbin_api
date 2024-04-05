@@ -3,10 +3,11 @@ import Foundation
 public struct Player {
     
     public let linkDetail : String
-    public var playerPrice : String?
-    public var popularity : String?
-    public var baseStats : String?
-    public var gameStats : String?
+    public let name : String?
+    public let playerPrice : String?
+    public let popularity : String?
+    public let baseStats : String?
+    public let gameStats : String?
 }
 
 public struct PlayerDetail: Identifiable {

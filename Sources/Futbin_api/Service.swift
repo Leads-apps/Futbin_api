@@ -259,11 +259,13 @@ public struct Service {
             for playerElements in playersElements {
                 for element in playerElements {
                     let link = try element.attr(ServiceAttributeKey.url.key)
+                    let name = try element.getElementsByTag(ServiceTag.td.tag)[safe: 1]?.text()
                     let playerPrice = try element.getElementsByClass(ServiceClass.price.name).select(ServiceTag.span.tag).text()
                     let popularity = try element.getElementsByTag(ServiceTag.td.tag)[safe: 16]?.text()
                     let baseStats = try element.getElementsByTag(ServiceTag.td.tag)[safe: 17]?.text()
                     let gameStats = try element.getElementsByTag(ServiceTag.td.tag)[safe: 18]?.text()
                     let player : Player = .init(linkDetail: link,
+                                                name: name,
                                                 playerPrice: playerPrice,
                                                 popularity: popularity,
                                                 baseStats: baseStats,
