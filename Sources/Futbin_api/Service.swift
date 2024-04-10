@@ -83,7 +83,7 @@ public struct Service {
     
     //MARK: - public methods
     ///Get detail player info (PlayerDetail) with input model Player
-    static func getPlayersDetailFor(player: Player, result: @escaping (Result<PlayerDetail, Error>) -> ()) {
+    public static func getPlayersDetailFor(player: Player, result: @escaping (Result<PlayerDetail, Error>) -> ()) {
         let link = mainLink + player.linkDetail
         getHTML(from: link) { complition in
             switch complition {
@@ -96,11 +96,7 @@ public struct Service {
                         switch complition {
                         case .success(let playerDetail):
                             var playerDetail = playerDetail
-                            playerDetail.playerPrice = player.playerPrice
-                            playerDetail.popularity = player.popularity
-                            playerDetail.baseStats = player.baseStats
-                            playerDetail.gameStats = player.gameStats
-                            
+                            playerDetail.player = player
                             result(.success(playerDetail))
                         case .failure(let error):
                             result(.failure(error))
@@ -253,25 +249,36 @@ public struct Service {
         }
     }
     
+    private static func getPlayersFrom(_ element: Element) throws -> Player {
+        let link = try element.attr(ServiceAttributeKey.url.key)
+        let name = try element.getElementsByTag(ServiceTag.td.tag)[safe: 1]?.text()
+        let playerPrice = try element.getElementsByClass(ServiceClass.price.name).select(ServiceTag.span.tag).text()
+        let popularity = try element.getElementsByTag(ServiceTag.td.tag)[safe: 16]?.text()
+        let baseStats = try element.getElementsByTag(ServiceTag.td.tag)[safe: 17]?.text()
+        let gameStats = try element.getElementsByTag(ServiceTag.td.tag)[safe: 18]?.text()
+        let player : Player = .init(linkDetail: link,
+                                    name: name,
+                                    playerPrice: playerPrice,
+                                    popularity: popularity,
+                                    baseStats: baseStats,
+                                    gameStats: gameStats)
+        
+        return player
+    }
+    
     private static func getPlayersLinks(from playersElements: [Elements]) throws -> [Player] {
         do {
             var players : [Player] = .init()
-            for playerElements in playersElements {
-                for element in playerElements {
-                    let link = try element.attr(ServiceAttributeKey.url.key)
-                    let name = try element.getElementsByTag(ServiceTag.td.tag)[safe: 1]?.text()
-                    let playerPrice = try element.getElementsByClass(ServiceClass.price.name).select(ServiceTag.span.tag).text()
-                    let popularity = try element.getElementsByTag(ServiceTag.td.tag)[safe: 16]?.text()
-                    let baseStats = try element.getElementsByTag(ServiceTag.td.tag)[safe: 17]?.text()
-                    let gameStats = try element.getElementsByTag(ServiceTag.td.tag)[safe: 18]?.text()
-                    let player : Player = .init(linkDetail: link,
-                                                name: name,
-                                                playerPrice: playerPrice,
-                                                popularity: popularity,
-                                                baseStats: baseStats,
-                                                gameStats: gameStats)
-                    players.append(player)
-                }
+            guard
+                let playerElementsFirst = playersElements.first,
+                let playerElementsLast = playersElements.last
+            else { return [] }
+            
+            for (elementFirst, elementLast) in zip(playerElementsFirst, playerElementsLast) {
+                let playerFirst = try getPlayersFrom(elementFirst)
+                players.append(playerFirst)
+                let playerLast = try getPlayersFrom(elementLast)
+                players.append(playerLast)
             }
             return players
         } catch {
