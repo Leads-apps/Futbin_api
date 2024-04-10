@@ -95,7 +95,7 @@ struct ListRow: View {
                         
                         Spacer()
                         
-                        Text(player.playerPrice ?? "-")
+                        Text(player.player?.playerPrice ?? "-")
                     }
                     
                     HStack {
@@ -187,7 +187,7 @@ struct ListRow: View {
                 VStack(alignment: .center) {
                     Text("Popularity")
                     
-                    Text(player.popularity ?? "-")
+                    Text(player.player?.popularity ?? "-")
                 }
                 
                 Spacer()
@@ -195,7 +195,7 @@ struct ListRow: View {
                 VStack(alignment: .center) {
                     Text("Base Status")
                     
-                    Text(player.baseStats ?? "-")
+                    Text(player.player?.baseStats ?? "-")
                 }
                 
                 Spacer()
@@ -203,7 +203,7 @@ struct ListRow: View {
                 VStack(alignment: .center) {
                     Text("Game Status")
                     
-                    Text(player.gameStats ?? "-")
+                    Text(player.player?.gameStats ?? "-")
                 }
             }
             .font(.caption)

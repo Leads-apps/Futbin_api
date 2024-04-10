@@ -12,6 +12,7 @@ public struct Player {
 
 public struct PlayerDetail: Identifiable {
     
+    public var player: Player?
     public var id : String
     public var name : String?
     public var playerImage : String?
@@ -25,7 +26,6 @@ public struct PlayerDetail: Identifiable {
     public var rareType : String?
     public var rate : String?
     public var position : String?
-    public var playerPrice : String?
     public var skills : String?
     public var weakFoot : String?
     public var attackWR : String?
@@ -38,9 +38,6 @@ public struct PlayerDetail: Identifiable {
     public var physicality : String?
     public var height : String?
     public var weight : String?
-    public var popularity : String?
-    public var baseStats : String?
-    public var gameStats : String?
     
     init() {
         id = UUID().uuidString
@@ -56,7 +53,6 @@ public struct PlayerDetail: Identifiable {
         rareType = nil
         rate = nil
         position = nil
-        playerPrice = nil
         skills = nil
         weakFoot = nil
         attackWR = nil
@@ -69,8 +65,5 @@ public struct PlayerDetail: Identifiable {
         physicality = nil
         height = nil
         weight = nil
-        popularity = nil
-        baseStats = nil
-        gameStats = nil
     }
 }
