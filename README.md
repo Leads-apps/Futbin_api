@@ -54,5 +54,48 @@ Get max number of pages
             }
         }
 ```
+
+## Data points
+```swift
+public struct Player {
+    
+    public let linkDetail : String
+    public let name : String?
+    public let playerPrice : String?
+    public let popularity : String?
+    public let baseStats : String?
+    public let gameStats : String?
+}
+
+public struct PlayerDetail: Identifiable {
+    
+    public var player: Player?
+    public var id : String
+    public var name : String?
+    public var playerImage : String?
+    public var cardImage : String?
+    public var clubName : String?
+    public var clubImage : String?
+    public var nationality : String?
+    public var natioalityFlag : String?
+    public var leagueName : String?
+    public var leagueImage : String?
+    public var rareType : String?
+    public var rate : String?
+    public var position : String?
+    public var skills : String?
+    public var weakFoot : String?
+    public var attackWR : String?
+    public var defenseWR : String?
+    public var pace : String?
+    public var shooting : String?
+    public var passing : String?
+    public var dribbling : String?
+    public var defending : String?
+    public var physicality : String?
+    public var height : String?
+    public var weight : String?
+}
+```
 ##App Example
 ![Simulator Screenshot - iPhone 14 Pro - 2024-04-05 at 13 29 19](https://github.com/Leads-apps/Futbin_api/assets/95756480/8b22689b-8fa9-434a-9519-c3588c23a0c8)
