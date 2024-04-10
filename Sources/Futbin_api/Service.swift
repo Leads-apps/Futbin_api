@@ -83,7 +83,7 @@ public struct Service {
     
     //MARK: - public methods
     ///Get detail player info (PlayerDetail) with input model Player
-    static func getPlayersDetailFor(player: Player, result: @escaping (Result<PlayerDetail, Error>) -> ()) {
+    public static func getPlayersDetailFor(player: Player, result: @escaping (Result<PlayerDetail, Error>) -> ()) {
         let link = mainLink + player.linkDetail
         getHTML(from: link) { complition in
             switch complition {
